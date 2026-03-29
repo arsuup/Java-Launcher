@@ -45,9 +45,6 @@ public class Updater extends BaseUpdater implements Callable<Instance>, Progress
     private final Launcher launcher;
     private final Instance instance;
 
-    @Getter @Setter
-    private boolean online;
-
     private List<URL> librarySources = new ArrayList<URL>();
     private List<URL> assetsSources = new ArrayList<URL>();
 
@@ -74,12 +71,6 @@ public class Updater extends BaseUpdater implements Callable<Instance>, Progress
         boolean updateRequired = !instance.isInstalled();
         boolean updateDesired = (instance.isUpdatePending() || updateRequired);
         boolean updateCapable = (instance.getManifestURL() != null);
-
-        if (!online && updateRequired) {
-            log.info("Can't update " + instance.getTitle() + " because offline");
-            String message = SharedLocale.tr("updater.updateRequiredButOffline");
-            throw new LauncherException("Update required but currently offline", message);
-        }
 
         if (updateDesired && !updateCapable) {
             if (updateRequired) {

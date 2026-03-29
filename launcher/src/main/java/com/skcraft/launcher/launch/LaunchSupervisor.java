@@ -83,7 +83,6 @@ public class LaunchSupervisor {
             if (update) {
                 // Execute the updater
                 Updater updater = new Updater(launcher, instance);
-                updater.setOnline(options.getUpdatePolicy() == UpdatePolicy.ALWAYS_UPDATE || session.isOnline());
                 ObservableFuture<Instance> future = new ObservableFuture<Instance>(
                         launcher.getExecutor().submit(updater), updater);
 

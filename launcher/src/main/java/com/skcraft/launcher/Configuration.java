@@ -31,6 +31,7 @@ public class Configuration {
     private int permGen = 256;
     private int windowWidth = 854;
     private int windowHeight = 480;
+    private boolean consoleEnabled = false;
     private boolean proxyEnabled = false;
     private String proxyHost = "localhost";
     private int proxyPort = 8080;

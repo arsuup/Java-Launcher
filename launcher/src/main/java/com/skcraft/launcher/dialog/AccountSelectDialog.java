@@ -23,10 +23,9 @@ public class AccountSelectDialog extends JDialog {
 	private final JList<SavedSession> accountList;
 	private final JButton loginButton = new JButton(SharedLocale.tr("accounts.play"));
 	private final JButton cancelButton = new JButton(SharedLocale.tr("button.cancel"));
-	private final JButton addMojangButton = new JButton(SharedLocale.tr("accounts.addMojang"));
 	private final JButton addMicrosoftButton = new JButton(SharedLocale.tr("accounts.addMicrosoft"));
+	private final JButton addCrackButton = new JButton(SharedLocale.tr("accounts.addCrack"));
 	private final JButton removeSelected = new JButton(SharedLocale.tr("accounts.removeSelected"));
-	private final JButton offlineButton = new JButton(SharedLocale.tr("login.playOffline"));
 	private final LinedBoxPanel buttonsPanel = new LinedBoxPanel(true);
 
 	private final Launcher launcher;
@@ -64,20 +63,17 @@ public class AccountSelectDialog extends JDialog {
 
 		//Start Buttons
 		buttonsPanel.setBorder(BorderFactory.createEmptyBorder(26, 13, 13, 13));
-		if (launcher.getConfig().isOfflineEnabled()) {
-			buttonsPanel.addElement(offlineButton);
-		}
 		buttonsPanel.addGlue();
 		buttonsPanel.addElement(cancelButton);
 		buttonsPanel.addElement(loginButton);
 
 		//Login Buttons
 		JPanel loginButtonsRow = new JPanel(new BorderLayout(0, 5));
-		addMojangButton.setAlignmentX(CENTER_ALIGNMENT);
 		addMicrosoftButton.setAlignmentX(CENTER_ALIGNMENT);
+		addCrackButton.setAlignmentX(CENTER_ALIGNMENT);
 		removeSelected.setAlignmentX(CENTER_ALIGNMENT);
-		loginButtonsRow.add(addMojangButton, BorderLayout.NORTH);
-		loginButtonsRow.add(addMicrosoftButton, BorderLayout.CENTER);
+		loginButtonsRow.add(addMicrosoftButton, BorderLayout.NORTH);
+		loginButtonsRow.add(addCrackButton, BorderLayout.CENTER);
 		loginButtonsRow.add(removeSelected, BorderLayout.SOUTH);
 		loginButtonsRow.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 
@@ -93,19 +89,15 @@ public class AccountSelectDialog extends JDialog {
 		loginButton.addActionListener(ev -> attemptExistingLogin(accountList.getSelectedValue()));
 		cancelButton.addActionListener(ev -> dispose());
 
-		addMojangButton.addActionListener(ev -> {
-			Session newSession = LoginDialog.showLoginRequest(this, launcher);
-
-			if (newSession != null) {
-				launcher.getAccounts().update(newSession.toSavedSession());
-				setResult(newSession);
-			}
-		});
-
 		addMicrosoftButton.addActionListener(ev -> attemptMicrosoftLogin(SharedLocale.tr("login.microsoft.seeBrowser")));
 
-		offlineButton.addActionListener(ev ->
-				setResult(new OfflineSession(launcher.getProperties().getProperty("offlinePlayerName"))));
+		addCrackButton.addActionListener(ev -> {
+			Session s = CrackLoginDialog.showLoginRequest(this, launcher, "");
+			if (s != null) {
+				launcher.getAccounts().update(s.toSavedSession());
+				setResult(s);
+			}
+		});
 
 		removeSelected.addActionListener(ev -> {
 			if (accountList.getSelectedValue() != null) {
@@ -200,12 +192,12 @@ public class AccountSelectDialog extends JDialog {
 		if (session.getType() == UserType.MICROSOFT) {
 			this.attemptMicrosoftLogin(message);
 		} else {
-			LoginDialog.ReloginDetails details = new LoginDialog.ReloginDetails(session.getUsername(),
-					SharedLocale.tr("login.relogin", message));
-			Session newSession = LoginDialog.showLoginRequest(AccountSelectDialog.this, launcher, details);
+			Session newSession = CrackLoginDialog.showLoginRequest(this, launcher, session.getUsername());
 
-			launcher.getAccounts().update(newSession.toSavedSession());
-			setResult(newSession);
+			if (newSession != null) {
+				launcher.getAccounts().update(newSession.toSavedSession());
+				setResult(newSession);
+			}
 		}
 	}
 
@@ -216,18 +208,15 @@ public class AccountSelectDialog extends JDialog {
 
 		@Override
 		public Session call() throws Exception {
+			if (session.getType() == UserType.LEGACY || session.getAccessToken().equals("0")) {
+				return new OfflineSession(session.getUsername());
+			}
+
 			return service.restore(session);
 		}
 
-		@Override
-		public String getStatus() {
-			return SharedLocale.tr("accounts.refreshingStatus");
-		}
-
-		@Override
-		public double getProgress() {
-			return -1;
-		}
+		@Override public String getStatus() { return SharedLocale.tr("accounts.refreshingStatus"); }
+		@Override public double getProgress() { return -1; }
 	}
 
 	private static class AccountRenderer extends JLabel implements ListCellRenderer<SavedSession> {

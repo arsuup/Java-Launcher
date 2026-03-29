@@ -8,6 +8,7 @@ package com.skcraft.launcher.dialog;
 
 import com.skcraft.launcher.Configuration;
 import com.skcraft.launcher.Launcher;
+import com.skcraft.launcher.auth.Session;
 import com.skcraft.launcher.dialog.component.BetterComboBox;
 import com.skcraft.launcher.launch.runtime.AddJavaRuntime;
 import com.skcraft.launcher.launch.runtime.JavaRuntime;
@@ -30,6 +31,8 @@ import java.util.Arrays;
  */
 public class ConfigurationDialog extends JDialog {
 
+    private final Launcher launcher;
+
     private final Configuration config;
     private final ObjectSwingMapper mapper;
 
@@ -44,6 +47,7 @@ public class ConfigurationDialog extends JDialog {
     private final FormPanel gameSettingsPanel = new FormPanel();
     private final JSpinner widthSpinner = new JSpinner();
     private final JSpinner heightSpinner = new JSpinner();
+    private final JCheckBox enableConsoleCheck = new JCheckBox(SharedLocale.tr("options.enableConsoleCheck"));
     private final FormPanel proxySettingsPanel = new FormPanel();
     private final JCheckBox useProxyCheck = new JCheckBox(SharedLocale.tr("options.useProxyCheck"));
     private final JTextField proxyHostText = new JTextField();
@@ -55,8 +59,8 @@ public class ConfigurationDialog extends JDialog {
     private final LinedBoxPanel buttonsPanel = new LinedBoxPanel(true);
     private final JButton okButton = new JButton(SharedLocale.tr("button.ok"));
     private final JButton cancelButton = new JButton(SharedLocale.tr("button.cancel"));
-    private final JButton aboutButton = new JButton(SharedLocale.tr("options.about"));
     private final JButton logButton = new JButton(SharedLocale.tr("options.launcherConsole"));
+    private final JButton accountsButton = new JButton(SharedLocale.tr("options.launcherAccounts"));
 
     /**
      * Create a new configuration dialog.
@@ -67,6 +71,7 @@ public class ConfigurationDialog extends JDialog {
     public ConfigurationDialog(Window owner, @NonNull Launcher launcher) {
         super(owner, ModalityType.DOCUMENT_MODAL);
 
+        this.launcher = launcher;
         this.config = launcher.getConfig();
         mapper = new ObjectSwingMapper(config);
 
@@ -97,6 +102,7 @@ public class ConfigurationDialog extends JDialog {
         mapper.map(permGenSpinner, "permGen");
         mapper.map(widthSpinner, "windowWidth");
         mapper.map(heightSpinner, "windowHeight");
+        mapper.map(enableConsoleCheck, "consoleEnabled");
         mapper.map(useProxyCheck, "proxyEnabled");
         mapper.map(proxyHostText, "proxyHost");
         mapper.map(proxyPortText, "proxyPort");
@@ -120,6 +126,7 @@ public class ConfigurationDialog extends JDialog {
 
         gameSettingsPanel.addRow(new JLabel(SharedLocale.tr("options.windowWidth")), widthSpinner);
         gameSettingsPanel.addRow(new JLabel(SharedLocale.tr("options.windowHeight")), heightSpinner);
+        gameSettingsPanel.addRow(enableConsoleCheck);
         SwingHelper.removeOpaqueness(gameSettingsPanel);
         tabbedPane.addTab(SharedLocale.tr("options.minecraftTab"), SwingHelper.alignTabbedPane(gameSettingsPanel));
 
@@ -136,7 +143,7 @@ public class ConfigurationDialog extends JDialog {
         tabbedPane.addTab(SharedLocale.tr("options.advancedTab"), SwingHelper.alignTabbedPane(advancedPanel));
 
         buttonsPanel.addElement(logButton);
-        buttonsPanel.addElement(aboutButton);
+        buttonsPanel.addElement(accountsButton);
         buttonsPanel.addGlue();
         buttonsPanel.addElement(okButton);
         buttonsPanel.addElement(cancelButton);
@@ -150,13 +157,6 @@ public class ConfigurationDialog extends JDialog {
 
         cancelButton.addActionListener(ActionListeners.dispose(this));
 
-        aboutButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                AboutDialog.showAboutDialog(ConfigurationDialog.this);
-            }
-        });
-
         okButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -168,6 +168,13 @@ public class ConfigurationDialog extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ConsoleFrame.showMessages();
+            }
+        });
+
+        accountsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                AccountSelectDialog.showAccountRequest(SwingUtilities.getWindowAncestor(accountsButton), launcher);
             }
         });
 
